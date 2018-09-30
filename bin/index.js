@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-    
+
+var cl = require('../lib/cl.js');
 var program = require('commander');
 const features = require ('./features.js');
 var fs = require('fs');
@@ -23,7 +24,7 @@ function getPresentHead(keyname){
 
     var branch = (fs.readFileSync(path+"/HEAD")).toString().split('/')[2].trim();
     var ref = (fs.readFileSync(path+"/refs/heads/"+ branch)).toString();
-    
+
     branch = (branch.green);
     return branch + ':' + ref;
 }
@@ -43,7 +44,7 @@ function getPresentHead(keyname){
 function _headfetcher(keyname){
     var path = features.repo[""+keyname][1]+"/.git"
     var branch = (fs.readFileSync(path+"/HEAD")).toString().split('/')[2].trim();
-   
+
     const options = {
     uri: features.repo[keyname][0]+"/commits/"+branch,
     transform: function (body) {
@@ -57,20 +58,20 @@ function _headfetcher(keyname){
     $('clipboard-copy').each(function(i, elem) {
         heads[i] = $(this).attr('value')+'\n';
         heads[i].replace(",",'');
-      });   
+      });
 
       /**
-       * if reference of top == head 
+       * if reference of top == head
        * var message = ("NO PULL REQUIRED".yellow)+"\n\n"+heads.toString();
-       * else 
+       * else
        * var message = ("PULL REQUIRED".yellow)+"\n\n"+heads.toString();
     */
-      console.log(message);
+    cl.warn(message)
   })
   .catch((err) => {
-    console.log(err);
+    cl.err(err);
   });
-    
+
 }
 
 
@@ -94,15 +95,15 @@ program
  */
 
 if(program.list)
-    console.log (features.getListOfRepoAvailable)
+    cl.act(features.getListOfRepoAvailable)
 
 else if(program.head){
-    console.log(getPresentHead(program.head))
+    cl.act(getPresentHead(program.head))
 }
 
 else if(program.fetch){
     _headfetcher(program.fetch);
 }
 else if(program.author){
-    console.log("aesher9o1".yellow);
+    cl.act("aesher9o1".yellow);
 }
