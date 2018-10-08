@@ -47,7 +47,13 @@ function _fetchAll(){
 }
 
 function _headfetcher(keyname){
-    var path = features.repo[""+keyname][1]+"/.git"
+    try {
+        var path = features.repo[""+keyname][1]+"/.git";
+    } catch(err) {
+        console.log("key name \"".red + keyname.red + "\" doesn't exist".red+ "\n");
+        return;
+    }
+
     var branch; 
     try{
         branch =  (fs.readFileSync(path+"/HEAD")).toString().split('/')[2].trim();
