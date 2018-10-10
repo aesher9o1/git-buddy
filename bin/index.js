@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-    
+
 var program = require('commander');
 const features = require ('./features.js');
 var fs = require('fs');
@@ -8,19 +8,18 @@ const rp = require('request-promise');
 const cheerio = require('cheerio');
 
 
-
 /**
  * Functions that i couldn't export
  */
 
 
 //Returns the head of the selected repo
-function getPresentHead(keyname){
+function getPresentHead(keyname) {
     //default path
-    var path = features.repo[""+keyname][1]+"/.git"
+    var path = features.repo["" +keyname][1] + "/.git"
 
-    var branch = (fs.readFileSync(path+"/HEAD")).toString().split('/')[2].trim();
-    var ref = (fs.readFileSync(path+"/refs/heads/"+ branch)).toString();
+    var branch = (fs.readFileSync(path + "/HEAD")).toString().split('/')[2].trim();
+    var ref = (fs.readFileSync(path + "/refs/heads/" + branch)).toString();
     
     branch = (branch.green);
     return branch + ':' + ref;
@@ -39,64 +38,70 @@ function getPresentHead(keyname){
 // }
 
 
-function _fetchAll(){
-    for (key in features.repo){
+function _fetchAll() {
+    for (key in features.repo) {
         _headfetcher(key);
     }
-    
 }
 
+function _fetchFirstNRepos(n) {
+    Object.keys(features.repo)
+        .slice(0, n)
+        .forEach(key => {
+            console.log(key);
+            _headfetcher(key);
+        });
+}
+
+
 function _headfetcher(keyname){
-    var path = features.repo[""+keyname][1]+"/.git"
+    var path = features.repo["" + keyname][1] + "/.git"
     var branch; 
-    try{
+    try {
         branch =  (fs.readFileSync(path+"/HEAD")).toString().split('/')[2].trim();
     }
     catch(err){
-        message = ("path ".red+ path.red + " doesn't exist".red)+"\n"
+        message = ("path ".red + path.red + " doesn't exist".red) + "\n"
         console.log(message);
         return;
     }
     const options = {
-    uri: features.repo[keyname][0]+"/commits/"+branch,
-    transform: function (body) {
-      return cheerio.load(body);
-    }
-  };
+        uri: features.repo[keyname][0] + "/commits/" + branch,
+        transform: function (body) {
+            return cheerio.load(body);
+        }
+    };
 
-  rp(options)
-  .then(($) => {
-	var heads = [];
-	$('clipboard-copy').each(function(i, elem) {
-      heads[i] = $(this).attr('value');
-      heads[i] = heads[i].replace(",",'');
-    });   
-	
-	$('.commit-title').each(function(i, elem) {
-		heads[i] += " | "+  $(elem).text();
-		heads[i] = heads[i].replace('…','');
-		heads[i] = heads[i].replace(/\s+/g,' ');
-		heads[i] = heads[i].substring(1,heads[i].length - 1)
-	})	  
+    rp(options)
+        .then(($) => {
+	          var heads = [];
+	          $('clipboard-copy').each(function(i, elem) {
+                heads[i] = $(this).attr('value');
+                heads[i] = heads[i].replace(",", '');
+            });
 
-	var msg = ""
-	var ref = getPresentHead(keyname).split(":")[1]
-	if(ref = heads[0]){
-		message = ("NO PULL REQUIRED FOR REPO : "+ keyname.yellow)+"\n\n"
-	}else{
-		message = ("PULL REQUIRED".yellow)+"\n\n"
-	}
-	
-	console.log(message)
-    console.log(heads)
-  })
-  .catch((err) => {
-    console.log(err);
-  });
-    
+	          $('.commit-title').each(function(i, elem) {
+		            heads[i] += " | " +  $(elem).text();
+		            heads[i] = heads[i].replace('…', '');
+		            heads[i] = heads[i].replace(/\s+/g, ' ');
+		            heads[i] = heads[i].substring(1, heads[i].length - 1)
+	          })
+
+	          var msg = ""
+	          var ref = getPresentHead(keyname).split(":")[1]
+	          if (ref = heads[0]) {
+		            message = ("NO PULL REQUIRED FOR REPO : "+ keyname.yellow)+"\n\n"
+	          } else {
+		            message = ("PULL REQUIRED".yellow)+"\n\n"
+	          }
+
+	          console.log(message)
+            console.log(heads)
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 }
-
-
 
 /**
  * -l --list -> Lists down all the repositories from the repo.json
@@ -110,6 +115,7 @@ program
     .option('-h, --head <keyname>', 'Get the head of the selected repo')
     .option('-f, --fetch <keyname>', 'Fetches the repo head currently works for public repo only')
     .option('-a, --all', 'Fetech the repo head for all everything in the json array')
+    .option('-t, --top <n>', 'Fetech the repo head for first n repos in the json array')
     .parse(process.argv);
 
 /**
@@ -119,20 +125,18 @@ program
 if(program.list){
     var feat = ' ' + features.getListOfRepoAvailable;
     feat = feat.replace(/,/g, '\n ');
-    console.log (feat.blue)
-
+    console.log(feat.blue)
 }
-    
-
-else if(program.head){
+else if (program.head) {
     var present_head = " " + getPresentHead(program.head);
     console.log(present_head.green);
 }
-
-else if(program.fetch){
+else if (program.fetch) {
     _headfetcher(program.fetch);
 }
-else if(program.all){
+else if (program.all) {
     _fetchAll();
-
+}
+else if (program.top) {
+    _fetchFirstNRepos(program.top)
 }
